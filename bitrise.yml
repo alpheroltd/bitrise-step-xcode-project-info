@@ -2,29 +2,114 @@ format_version: 1.1.0
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 workflows:
-  test:
-    steps:
-    - change-workdir:
-        title: Switch working dir to test / _tmp dir
-        description: |-
-          To prevent step testing issues, like referencing relative
-          files with just './some-file' in the step's code, which would
-          work for testing the step from this directory directly
-          but would break if the step is included in another `bitrise.yml`.
-        run_if: true
-        inputs:
-        - path: ./_tmp
-        - is_create_path: true
-    - path::./:
-        title: Step Test
-        description: |-
-          The example input has a default value,
-          you can overwrite it if you want to, just like we did below,
-          but the step would use the default value specified in the `step.yml`
-          file if you would not specify another value.
-        inputs:
-        - info_plist_path: Test Project/Info.plist
 
+  test:
+    before_run:
+    - test-valid-cases
+    - test-invalid-cases
+
+  test-valid-cases:
+    steps:
+
+    - path::./:
+        title: Test no target specified
+        inputs:
+        - xcodeproj_path: $BITRISE_SOURCE_DIR/_tmp/Test/iOSApp/iOSApp.xcodeproj
+
+    - path::./:
+        title: Test iOS app version
+        inputs:
+        - xcodeproj_path: $BITRISE_SOURCE_DIR/_tmp/Test/iOSApp/iOSApp.xcodeproj
+        - target: iOSApp
+    
+    - path::./:
+        title: Test iOS widget target version
+        inputs:
+        - xcodeproj_path: $BITRISE_SOURCE_DIR/_tmp/Test/iOSApp/iOSApp.xcodeproj
+        - target: iOSAppWidgetExtension
+
+    - path::./:
+        title: Test workspace iOSApp version
+        inputs:
+        - xcworkspace_path: ./_tmp/Test/Test.xcworkspace
+        - scheme_name: iOSApp
+    
+    - path::./:
+        title: Test iOS widget target version
+        inputs:
+        - xcworkspace_path: ./_tmp/Test/Test.xcworkspace
+        - scheme_name: iOSAppWidgetExtension
+    
+    - path::./:
+        title: Test iOS widget target version
+        inputs:
+        - xcworkspace_path: ./_tmp/Test/Test.xcworkspace
+        - scheme_name: tvOSApp
+
+  test-invalid-cases:
+    steps:
+    - path::./:
+        title: Test no inputs (expect exit code 1)
+        is_skippable: true
+    - script:
+        title: Verify outputs
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            if [ ! -z "$XPI_VERSION" ]; then
+                echo "[FAIL] The version number should not have a value"
+                exit 1 
+            fi
+            if [ ! -z "$XPI_BUILD" ]; then
+                echo "[FAIL] The build number should not have a value"
+                exit 1 
+            fi
+            exit 0
+
+    - path::./:
+        title: Test missing scheme name (expect exit code 1)
+        is_skippable: true
+        inputs:
+        - xcworkspace_path: ./_tmp/Test/Test.xcworkspace
+        # - scheme_name: tvOSApp
+    - script:
+        title: Verify outputs
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            if [ ! -z "$XPI_VERSION" ]; then
+                echo "[FAIL] The version number should not have a value"
+                exit 1 
+            fi
+            if [ ! -z "$XPI_BUILD" ]; then
+                echo "[FAIL] The build number should not have a value"
+                exit 1 
+            fi
+            exit 0
+
+    - path::./:
+        title: Test bad path (expect exit code 1)
+        is_skippable: true
+        inputs:
+        - xcworkspace_path: ./DoesNotExist.xcworkspace
+        - scheme_name: tvOSApp
+    - script:
+        title: Verify outputs
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            if [ ! -z "$XPI_VERSION" ]; then
+                echo "[FAIL] The version number should not have a value"
+                exit 1 
+            fi
+            if [ ! -z "$XPI_BUILD" ]; then
+                echo "[FAIL] The build number should not have a value"
+                exit 1 
+            fi
+            exit 0
 
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library

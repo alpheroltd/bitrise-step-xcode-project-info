@@ -1,10 +1,30 @@
 title: "Xcode Project Info"
 summary: Extracts Xcode project info data to environment variables.
 description: |-
-  This step will simply extract Xcode project information (Version and Build),
-  and export them into environment variables prefixed with **XPI_**.
-
+  ## Xcode Project Info
+  This step will simply extract Xcode project information (Version and Build), and export them into environment variables prefixed with `XPI_`.
+  
   Afterwards, you can use these environment variables in other steps (ie. sending message on Slack).
+
+  ---
+
+  #### **Note**
+  This version is intended for use on projects created with Xcode 11 and onwards.
+  If your project still uses an Info.plist to store the explicit version and build values then use **2.X.X** of this step.
+  
+  ---
+
+  ### **Projects**
+  When using an xcode project then you only need to provide a path to the xcodeproj file and the particular target to read from.
+  The step will then read from the data and return the version information.
+
+
+  ### **Workspaces**
+  If you are using Xcode workspaces then use the `Workspace path` and `Workspace scheme name` inputs to qualify the target to read from.
+  You must provide values for _**both**_ inputs, the workspace path alone is not enough to resolve the version and build values.
+
+
+  
 website: https://github.com/tadija/bitrise-step-xcode-project-info
 source_code_url: https://github.com/tadija/bitrise-step-xcode-project-info
 support_url: https://github.com/tadija/bitrise-step-xcode-project-info/issues
@@ -21,30 +41,35 @@ deps:
   check_only:
     - name: xcode
 inputs:
-  - info_plist_path: Info.plist
-    opts:
-      title: "Relative path from Source directory to Info.plist file"
-      description: |-
-        Source directory is considered to be root directory created by the Git Clone step.
-        If your `Info.plist` file is in **RootDir/ProjectName** directory (for example), 
-        then you should set this input to `ProjectName/Info.plist`.
-      summary: ""
-      is_required: true
   - xcodeproj_path:
     opts:
-      title: "Relative path from Source directory to Xcode project file"
+      title: "Project path"
+      summary: "Relative path from Source directory to Xcode project file"
       description: |-
-        Required for Xcode 11+, since version & build numbers are no longer stored in Info.plist, but replaced by the variables $(MARKETING_VERSION) and $(CURRENT_PROJECT_VERSION).
-        The actual numbers should be extracted from the pbxproj file.
-      summary: ""
+        Use this in conjuction with **Project target** to qualify the exact target to read the version and build values from.
+        If empty, then the **Workspace path** and **Workspace scheme name** inputs will be used
       is_required: false
   - target:
     opts:
-      title: "For Xcode 11+ projects, get the version & build for this target"
+      title: "Project target"
+      summary: "The target name within the Xcode project to read from"
       description: |-
-        The version & build number can differ depending on the target. If not specified, the default target will be used.
-      summary: ""
+        The version & build number can differ depending on the target.
+        If not specified, the default target will be used.
       is_required: false
+  - xcworkspace_path:
+    opts:
+      title: "Workspace path"
+      summary: "Relative path from the source directory to the Xcode workspace file"
+      description: |-
+        Use this in conjuction with **Workspace scheme name** to qualify the build settings.
+  - scheme_name:
+    opts:
+      title: "Workspace scheme name"
+      summary: "The name of the scheme within a workspace to read the version information from"
+      description: |-
+        Use this in conjuction with **Workspace path** to qualify the build settings.
+  
 outputs:
   - XPI_VERSION:
     opts:
