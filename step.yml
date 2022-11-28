@@ -22,8 +22,6 @@ description: |-
   ### **Workspaces**
   If you are using Xcode workspaces then use the `Workspace path` and `Workspace scheme name` inputs to qualify the target to read from.
   You must provide values for _**both**_ inputs, the workspace path alone is not enough to resolve the version and build values.
-
-
   
 website: https://github.com/tadija/bitrise-step-xcode-project-info
 source_code_url: https://github.com/tadija/bitrise-step-xcode-project-info
